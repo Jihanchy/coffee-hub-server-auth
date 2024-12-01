@@ -26,48 +26,87 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         const coffeeCollection = client.db('coffeeDB').collection('coffee')
+        const usersCollection = client.db('coffeeDB').collection('users')
         app.get('/coffees', async (req, res) => {
             const cursor = coffeeCollection.find()
             const result = await cursor.toArray()
             res.send(result)
         })
+
         app.get('/coffees/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const coffee = await coffeeCollection.findOne(query)
             res.send(coffee)
         })
+
         app.post('/coffees', async (req, res) => {
             const newCoffee = req.body
             console.log(newCoffee)
             const result = await coffeeCollection.insertOne(newCoffee)
             res.send(result)
         })
+
         app.put('/coffees/:id', async (req, res) => {
             const id = req.params.id;
             const body = req.body
             const filter = { _id: new ObjectId(id) }
-            const options = {upsert : true}
+            const options = { upsert: true }
             const updatedCoffee = {
-                $set : {
-                    name : body.name,
-                    chef : body.chef,
-                    supplier : body.supplier,
-                    taste : body.taste,
-                    category : body.category,
-                    details : body.details,
-                    photo : body.photo
+                $set: {
+                    name: body.name,
+                    chef: body.chef,
+                    supplier: body.supplier,
+                    taste: body.taste,
+                    category: body.category,
+                    details: body.details,
+                    photo: body.photo
                 }
             }
-            const result = await coffeeCollection.updateOne(filter,updatedCoffee,options)
+            const result = await coffeeCollection.updateOne(filter, updatedCoffee, options)
             res.send(result)
         })
+
         app.delete('/coffees/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await coffeeCollection.deleteOne(query)
             res.send(result)
         })
+
+        
+        // users apis
+        app.get('/users', async (req, res) => {
+            const cursor = usersCollection.find()
+            const result = await cursor.toArray()
+            res.send(result)
+        })
+
+        app.post('/users', async (req, res) => {
+            const newUser = req.body
+            const result = await usersCollection.insertOne(newUser)
+            res.send(result)
+        })
+
+        app.patch('/users', async (req, res) => {
+            const email = req.body.email
+            const filter = { email }
+            const updatedUser = {
+                $set:{
+                    lastSignInTime:req?.body?.lastSignInTime
+                }
+            }
+            const result = await usersCollection.updateOne(filter,updatedUser)
+            res.send(result)
+        })
+
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await usersCollection.deleteOne(query)
+            res.send(result)
+        })
+        
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
